@@ -79,6 +79,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // processa o upload da imagem
     $imagem = "";
     if(isset($_FILES['imagem']) && $_FILES['imagem']['error'] == 0) {
-        $resultado_upload = 
+        $resultado_upload = redimensionarESalvarImagem($_FILES['imagem']);
+        if(strpos($resultado_upload, 'img/') === 0) {
+            $imagem = $resultado_upload;
+        }
+    }
+
+    // prepara a query sql para inserção ou atualização
+    if ($id) {
+        // se o id existe, é uma atualização
+        $sql = "UPDATE fornecedores SET nome = '$nome', email = '$email', telefone = '$telefone'";
+        if($imagem) {
+            $sql .= ", imagem = '$imagem'";
+        } 
+        $sql .= "WHERE id = '$id'";
+        $mensagem = "Fornecedor atualizado com sucesso!"; 
+    } else {
+        // se não há ID, é uma nova inserção
+        $sql = "INSERT INTO fornecedores (nome, email, telefone, imagem) VALUES ('$nome', '$email', '$telefone', '$imagem')";
+        $mensagem = "Fornecedor cadastrado com sucesso!";
+    }
+
+    // Executa a query e verifica se houve erro
+    if ($conn->query($sql) !== TRUE) {
+        $mensagem = "Erro: " . $conn->error;
     }
 }  
+
+// verifica se foi solicitada a exclusão de um fornecedor
+if (isset($_GET['delete_id'])) {
+    $delete_id = $_GET['delete_id'];
+
+    // verifica se o fornecedor tem produtos cadastrados
+    $check_produtos = $conn->query("SELECT COUNT(*) as count FROM produtos WHERE fornecedor_id = '$delete_id'")->fetch_assoc();
+
+    if ($check_produtos['count'])
+}
